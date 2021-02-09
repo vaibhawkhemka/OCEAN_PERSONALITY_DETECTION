@@ -166,7 +166,7 @@ class train_model(sarcasm_model):
         # embedding dimension
         dimension_size = 300
         emb_weights = load_glove_model(self._vocab, n=dimension_size,
-                                       glove_path='/content/SarcasmDetection/src/glove.6B.300d.txt')
+                                       glove_path='DATA/glove.6B.300d.txt')
 
         LABEL = []
         for l in Y:
