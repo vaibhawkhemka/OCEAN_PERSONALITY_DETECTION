@@ -7,7 +7,7 @@ from gensim.models.keyedvectors import KeyedVectors
 from gensim.models.wrappers import FastText
 import numpy
 from nltk.tokenize import TweetTokenizer
-import src.data_processing.glove2Word2vecLoader as glove
+import data_preprocessing.glove2Word2vec2Loader as glove
 import itertools
 
 
@@ -164,7 +164,7 @@ def split_hashtags(term, wordlist, split_word_list, dump_file=''):
     return words
 
 
-def load_abbreviation(path='../resource/abbreviations.txt'):
+def load_abbreviation(path='../TEXT_FILES/abbreviations.txt'):
     abbreviation_dict = defaultdict()
     with open(path) as f:
         lines = f.readlines()
@@ -216,7 +216,7 @@ def filter_text(text, word_list, split_word_list, emoji_dict, abbreviation_dict,
 
         # splitting hastags
         if (split_hashtag and str(t).startswith("#")):
-            splits = split_hashtags(t, word_list, split_word_list, dump_file='../resource/hastash_split_dump.txt')
+            splits = split_hashtags(t, word_list, split_word_list, dump_file='../TEXT_FILES/hastash_split_dump.txt')
             # adding the hashtags
             if (splits != None):
                 filtered_text.extend([s for s in splits if (not filtered_text.__contains__(s))])
