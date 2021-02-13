@@ -60,7 +60,7 @@ class sarcasm_model():
         output_attention_mul = multiply([inputs, a_probs], name='attention_mul')
         return output_attention_mul
 
-    def _build_network(self, vocab_size, maxlen, emb_weights=[], embedding_dimension=30, hidden_units=256,
+    def _build_network(self, vocab_size, maxlen, emb_weights=[], embedding_dimension=30, hidden_units=32,
                        batch_size=1):
         print('Build model...')
 
@@ -178,12 +178,14 @@ class train_model(sarcasm_model):
             m= [0]*o + m       
           LABEL.append(m)
         Y = np.asarray(LABEL)
-
+        print(Y.shape)
+        print(Y)
+        print(X.shape)
         # trainable true if you want word2vec weights to be updated
         # Not applicable in this code
         model = self._build_network(len(self._vocab.keys()) + 1, self._line_maxlen, emb_weights, hidden_units=32,
                                     embedding_dimension=dimension_size, batch_size=batch_size)
-        model.fit(X, Y, batch_size=batch_size, epochs=1,
+        model.fit(X, Y, batch_size=batch_size, epochs=5,
                   shuffle=True)          
         model_json = model.to_json()
         with open(model_file + 'model.json', "w") as json_file:
