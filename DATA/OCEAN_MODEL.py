@@ -60,7 +60,7 @@ class sarcasm_model():
         output_attention_mul = multiply([inputs, a_probs], name='attention_mul')
         return output_attention_mul
 
-    def _build_network(self, vocab_size, maxlen, emb_weights=[], embedding_dimension=30, hidden_units=32,
+    def _build_network(self, vocab_size, maxlen, emb_weights=[], embedding_dimension=30, hidden_units=64,
                        batch_size=1):
         print('Build model...')
 
@@ -74,12 +74,12 @@ class sarcasm_model():
             emb = Embedding(vocab_size, emb_weights.shape[1], input_length=maxlen, weights=[emb_weights],
                             trainable=False)(text_input)
         
-        emb_dropout = Dropout(0.5)(emb)
+        #emb_dropout = Dropout(0.5)(emb)
        
-        lstm_bwd = LSTM(hidden_units, kernel_initializer='he_normal', activation='sigmoid', dropout=0.4,
-                        go_backwards=True, return_sequences=True)(emb_dropout)
-        lstm_fwd = LSTM(hidden_units, kernel_initializer='he_normal', activation='sigmoid', dropout=0.4,
-                        return_sequences=True)(emb_dropout)
+        lstm_bwd = LSTM(hidden_units, kernel_initializer='he_normal', activation='sigmoid',
+                        go_backwards=True, return_sequences=True)(emb)
+        lstm_fwd = LSTM(hidden_units, kernel_initializer='he_normal', activation='sigmoid',
+                        return_sequences=True)(emb)
 
         lstm_merged = concatenate([lstm_bwd, lstm_fwd])
 
@@ -98,13 +98,16 @@ class sarcasm_model():
             pool1)
         pool2 = MaxPooling1D(pool_size=3)(cnn2)
         
-
-        flat_cnn = Flatten()(pool2)
+        cnn3 = Convolution1D(3 * hidden_units, 3, kernel_initializer='he_normal', padding='valid', activation='relu')(
+            pool2)
+        pool3 = MaxPooling1D(pool_size=3)(cnn3)
+        
+        flat_cnn = Flatten()(pool3)
 
         dnn_1 = Dense(hidden_units)(flat_cnn)
-        dropout_1 = Dropout(0.25)(dnn_1)
+        #dropout_1 = Dropout(0.25)(dnn_1)
     
-        dnn_2 = Dense(5)(dropout_1)
+        dnn_2 = Dense(5)(dnn_1)
         
 
         softmax = Activation('softmax')(dnn_2)
@@ -114,7 +117,7 @@ class sarcasm_model():
 
         adam = tf.keras.optimizers.Adam(learning_rate=0.1)
 
-        model.compile(loss='binary_crossentropy', optimizer=adam, metrics=['accuracy'])
+        model.compile(loss='categorical_crossentropy', optimizer=adam, metrics=['accuracy'])
         print('No of parameter:', model.count_params())
 
         print(model.summary())
@@ -178,14 +181,14 @@ class train_model(sarcasm_model):
             m= [0]*o + m       
           LABEL.append(m)
         Y = np.asarray(LABEL)
-        print(Y.shape)
-        print(Y)
-        print(X.shape)
+        #print(Y.shape)
+        #print(Y)
+        #print(X.shape)
         # trainable true if you want word2vec weights to be updated
         # Not applicable in this code
-        model = self._build_network(len(self._vocab.keys()) + 1, self._line_maxlen, emb_weights, hidden_units=32,
+        model = self._build_network(len(self._vocab.keys()) + 1, self._line_maxlen, emb_weights, hidden_units=64,
                                     embedding_dimension=dimension_size, batch_size=batch_size)
-        model.fit(X, Y, batch_size=batch_size, epochs=5,
+        model.fit(X, Y, batch_size=batch_size, epochs=3,
                   shuffle=True)          
         model_json = model.to_json()
         with open(model_file + 'model.json', "w") as json_file:
@@ -219,13 +222,12 @@ class test_model(sarcasm_model):
     test = None
     model = None
 
-    def __init__(self,test_file,model_file, word_file_path, split_word_path, emoji_file_path, vocab_file_path, output_file,
+    def __init__(self,test_file,model_file, split_word_path, emoji_file_path, vocab_file_path, output_file,
                  input_weight_file_path=None):
         print('initializing...')
         sarcasm_model.__init__(self)
         self._test_file = test_file
         self._model_file_path = model_file
-        self._word_file_path = word_file_path
         self._split_word_file_path = split_word_path
         self._emoji_file_path = emoji_file_path
         self._vocab_file_path = vocab_file_path
@@ -264,8 +266,8 @@ class test_model(sarcasm_model):
 
     def test_predict(self,verbose=False):
         start = time.time()
-        self.test = dh.loaddata(self._test_file, self._word_file_path, self._split_word_file_path, self._emoji_file_path,
-                                    normalize_text=True, split_hashtag=True,
+        self.test = dh.loaddata(self._test_file, self._split_word_file_path, self._emoji_file_path,
+                                    normalize_text=True,
                                     ignore_profiles=False)
         end = time.time()
         if (verbose == True):
@@ -277,9 +279,9 @@ class test_model(sarcasm_model):
 
         dh.write_vocab(self._vocab_file_path, self._vocab)
         
-        tX, tY, D, C, A = dh.vectorize_word_dimension(self.test, self._vocab)
+        tX = dh.vectorize_word_dimension(self.test, self._vocab)
         tX = dh.pad_sequence_1d(tX, maxlen=self._line_maxlen)
-      
+        #print(tx.shape)
         dimension_size = 300
         emb_weights = load_glove_model(self._vocab, n=dimension_size,
                                        glove_path='/DATA/glove.6B.300d.txt')
@@ -298,9 +300,8 @@ class test_model(sarcasm_model):
 if __name__ == "__main__":
     basepath = os.getcwd()[:os.getcwd().rfind('/')]
   
-    train_file = basepath + '/TEXT_FILES/TRAIN/train_data.txt'
-    test_file = basepath + '/TEXT_FILES/TEXT/text_data.txt'
-    word_file_path = basepath + '/TEXT_FILES/word_list_freq.txt'
+    train_file = basepath + '/TEXT_FILES/TRAIN/train.txt'
+    test_file = basepath + '/TEXT_FILES/TEXT/information.txt'
     split_word_path = basepath + '/TEXT_FILES/word_split.txt'
     emoji_file_path = basepath + '/TEXT_FILES/emoji_unicode_names_final.txt'
 
@@ -309,9 +310,9 @@ if __name__ == "__main__":
     vocab_file_path = basepath + '/TEXT_FILES/TEXT_MODEL/vocab_list.txt'
 
     # uncomment for training
-    tr = train_model(train_file,word_file_path, split_word_path, emoji_file_path, model_file,
-                     vocab_file_path, output_file)
+    #tr = train_model(train_file,word_file_path, split_word_path, emoji_file_path, model_file,
+    #                 vocab_file_path, output_file)
 
-    #t = test_model(test_file,model_file, word_file_path, split_word_path, emoji_file_path, vocab_file_path, output_file)
-    #t.load_trained_model(weight_file='model.json.hdf5')
-    #t.test_predict()
+    t = test_model(test_file,model_file,split_word_path, emoji_file_path, vocab_file_path, output_file)
+    t.load_trained_model(weight_file='model.json.hdf5')
+    t.test_predict()
