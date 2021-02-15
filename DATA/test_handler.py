@@ -30,6 +30,7 @@ for x in Input_File:
             text= xf + text   
             #print(text)  
             Final_File.writelines(text + '\n')
+        Final_File.writelines('\n')      
 Final_File.close()               
 from subprocess import call
 call(["python", "OCEAN_MODEL.py"])
