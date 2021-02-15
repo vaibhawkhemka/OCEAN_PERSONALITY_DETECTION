@@ -266,7 +266,7 @@ class test_model(sarcasm_model):
 
     def test_predict(self,verbose=False):
         start = time.time()
-        self.test = dh.loaddata(self._test_file, self._split_word_file_path, self._emoji_file_path,
+        self.test,dictionary = dh.loaddata(self._test_file, self._split_word_file_path, self._emoji_file_path,
                                     normalize_text=True,
                                     ignore_profiles=False)
         end = time.time()
@@ -285,16 +285,18 @@ class test_model(sarcasm_model):
         dimension_size = 300
         emb_weights = load_glove_model(self._vocab, n=dimension_size,
                                        glove_path='/DATA/glove.6B.300d.txt')
-
+        out_file = open('/content/OCEAN_PERSONALITY_DETECTION/DATA/predictions.txt','w')
         label_dict = {0:'EXTRAVERSION',1:'NEUROTICISM',2:'AGREEABLENESS',3:'CONSCIENTIOUSNESS',4:'OPENNESS'}
         predictions = self.model.predict(tX)
-        total_pred = np.array([0,0,0,0,0])
-        for i in predictions:
-            total_pred = np.add(total_pred,np.array(i))    
-        pos = np.where(total_pred==max(total_pred))
-        l_pos = pos[0].tolist()
-        RESULT= l_pos[0]
-        print("THE RESULT IS " + str(label_dict[RESULT]))    
+        for key,value in dictionary.items():
+            total_pred = np.array([0,0,0,0,0])
+            for i in predictions[value[0]:value[1]]:
+                total_pred = np.add(total_pred,np.array(i))    
+            pos = np.where(total_pred==max(total_pred))
+            l_pos = pos[0].tolist()
+            RESULT= l_pos[0]
+            out_file.writelines(str(key)+'\t'+str(label_dict[RESULT])+'\n')
+            #print("THE RESULT IS " + str(label_dict[RESULT]))    
 
        
 if __name__ == "__main__":
