@@ -120,6 +120,9 @@ def parsedata(lines,split_word_list, emoji_dict, abbreviation_dict, normalize_te
               ignore_profiles=False,
               lowercase=False, replace_emoji=True, n_grams=None, at_character=False):
     data = []
+    out_dict={}
+    ini_point = 0
+    names= (lines[0].split('\t'))[0]
     for i, line in enumerate(lines):
         if (i % 100 == 0):
             print(str(i) + '...', end='', flush=True)
@@ -132,25 +135,33 @@ def parsedata(lines,split_word_list, emoji_dict, abbreviation_dict, normalize_te
 
             # split into token
             token = line.split('\t')
-
+            
             # ID
             id = token[0]
+            if line[0]=='\n':
+              out_dict[names] = [ini_point,i-1]
+              if i+1<=len(lines)-1:
+                names= (lines[i+1].split('\t'))[0] 
+                ini_point = i+1  
+             
+              
             #print(id)
             # label
             #label = (token[1].strip())
             #print(label)
             # tweet text
             #print(token[1])
-            target_text = TweetTokenizer().tokenize(token[1].strip())
-            if (at_character):
-                target_text = [c for c in token[1].strip()]
+            if line[0]!='\n':
+              target_text = TweetTokenizer().tokenize(token[1].strip())
+              if (at_character):
+                  target_text = [c for c in token[1].strip()]
 
-            if (n_grams != None):
-                n_grams_list = list(create_ngram_set(target_text, ngram_value=n_grams))
-                target_text.extend(['_'.join(n) for n in n_grams_list])
+              if (n_grams != None):
+                  n_grams_list = list(create_ngram_set(target_text, ngram_value=n_grams))
+                  target_text.extend(['_'.join(n) for n in n_grams_list])
 
             # filter text
-            target_text = filter_text(target_text,split_word_list, emoji_dict, abbreviation_dict,
+              target_text = filter_text(target_text,split_word_list, emoji_dict, abbreviation_dict,
                                       normalize_text,
                                       ignore_profiles, replace_emoji=replace_emoji)
 
@@ -174,13 +185,14 @@ def parsedata(lines,split_word_list, emoji_dict, abbreviation_dict, normalize_te
             #if (len(token) > 5):
             #    author = token[5]
 
-            if (len(target_text) != 0):
+              if (len(target_text) != 0):
                 # print((label, target_text, dimensions, context, author))
-                data.append((id, target_text))
+                  data.append((id, target_text))
         except:
             raise
+    #print(out_dict)
     print('')
-    return data
+    return data,out_dict
 
 
 def load_resources(split_word_path, emoji_file_path, replace_emoji=True):
@@ -207,10 +219,10 @@ def loaddata(filename,split_word_path, emoji_file_path, normalize_text=False,
                                                                                replace_emoji=replace_emoji)
     lines = open(filename, 'r').readlines()
 
-    data = parsedata(lines,split_word_list, emoji_dict, abbreviation_dict, normalize_text=normalize_text,
+    data,dictionary = parsedata(lines,split_word_list, emoji_dict, abbreviation_dict, normalize_text=normalize_text,
                      ignore_profiles=ignore_profiles, lowercase=lowercase, replace_emoji=replace_emoji,
                      n_grams=n_grams, at_character=at_character)
-    return data
+    return data,dictionary
 
 
 def build_vocab(data, ignore_context=False, min_freq=0):
