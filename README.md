@@ -1,11 +1,11 @@
 # OCEAN_PERSONALITY_DETECTION
 # REQUIREMENTS:
-•nltk (TweetTokenizer)
-•Keras
-•Tensorflow
-•numpy
-•scipy
-•itertools
+•nltk (TweetTokenizer)   
+•Keras   
+•Tensorflow   
+•numpy  
+•scipy  
+•itertools  
 
 # PREPROCESSING:
 • “DATA/data_preprocessing/data_handler.py” prepares the data for training and output the preprocessed data as “TEXT_FILES/TRAIN/train_data.txt”   
