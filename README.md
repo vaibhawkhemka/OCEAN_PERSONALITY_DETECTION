@@ -30,3 +30,6 @@
 •It will give output with information extracted as “OCEAN_PERSONALITY_DETECTION/TEXT_FILES/TEXT/information.txt”  
 •And Prediction for all test cases as “OCEAN_PERSONALITY_DETECTION/DATA/predictions.txt”  
 
+This  project is done in collaboration with Sunny Mane (github.com/nrup323)
+
+
